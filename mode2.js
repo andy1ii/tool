@@ -1,12 +1,9 @@
-// ==========================================
-// MODE 2: IMAGE BURST (FINAL CROP FIX)
-// ==========================================
 
 let m2_pg; 
 let m2_pickingBuffer; 
 let m2_nodes = [];
 
-// Base distance we use for calculations
+
 const M2_BASE_DIST = 2200; 
 
 let m2_userScale = 1.0; 
@@ -18,7 +15,7 @@ let m2_lastMouseX = 0; let m2_lastMouseY = 0;
 let m2_triggerFrame = -10000; 
 let m2_imageBurstStartFrame = -10000; 
 
-// CONFIGURATION
+
 const M2_ACTIVE_DELAY = 30; 
 const M2_ACTIVE_MOVE = 15;
 const M2_ACTIVE_STAGGER = 1.0;
@@ -127,33 +124,27 @@ function mode2_mouseDragged() {
     let dy = mouseY - m2_lastMouseY;
 
     if (m2_dragNode) {
-        // 1. Calculate the exact camera setup used in renderMode2Scene
-        // This ensures our mouse movements match the visual perspective 1:1
+
         let aspect = width / height;
         let dynamicDist = M2_BASE_DIST;
         if (aspect < 1.0) {
              dynamicDist = (M2_BASE_DIST / aspect) * 1.2; 
         }
 
-        // 2. Calculate the "Units Per Pixel" at the object's depth
-        // This makes sure dragging works the same whether the object is close or far.
+
         let fov = PI / 3.0; // 60 degrees
         let objZ = m2_dragNode.currentZ || 0;
         let distToCam = dynamicDist - objZ;
         
-        // Visible height in 3D units at this depth = 2 * dist * tan(FOV/2)
-        // tan(PI/6) is approx 0.57735
+
         let visibleHeightAtDepth = 2 * distToCam * 0.57735;
         let unitsPerPixel = visibleHeightAtDepth / height;
 
-        // 3. Safety Clamps
-        // If userSpacing is near 0, dividing by it causes infinite movement.
-        // We clamp these values to ensure the drag feels stable/physical.
+
         let safeSpacing = (m2_userSpacing < 0.5) ? 0.5 : m2_userSpacing;
         let safeScale = (m2_userScale < 0.5) ? 0.5 : m2_userScale;
         
-        // 4. Apply Movement
-        // We divide by spacing/scale because the render loop multiplies by them.
+
         m2_dragNode.targetPos.x += (dx * unitsPerPixel) / (safeSpacing * safeScale);
         m2_dragNode.targetPos.y += (dy * unitsPerPixel) / (safeSpacing * safeScale);
     } 
@@ -168,17 +159,14 @@ function renderMode2Scene(pg, w, h, s, isPicking, isPreview) {
 
   let gl = pg.drawingContext; gl.disable(gl.DEPTH_TEST); 
   
-  // ============================================================
-  // ADAPTIVE CAMERA (WITH SAFETY PADDING)
-  // ============================================================
+
   let fov = PI / 3.0;
   let aspect = w / h;
   let dynamicDist = M2_BASE_DIST;
   
-  // If the aspect ratio is narrower than 1.0 (Portrait),
-  // we zoom out proportionally to keep the same width visible.
+
   if (aspect < 1.0) {
-      // The 1.2 multiplier adds EXTRA padding so nothing touches the edge
+
       dynamicDist = (M2_BASE_DIST / aspect) * 1.2; 
   }
   
@@ -254,17 +242,10 @@ function rebuildMode2Nodes() {
   let sourceImages = [...uploadedImages];
   for (let i = sourceImages.length - 1; i > 0; i--) { const j = floor(random(i + 1)); [sourceImages[i], sourceImages[j]] = [sourceImages[j], sourceImages[i]]; }
   
-  // ========================================================
-  // FIXED LAYOUT CONSTANTS (INDEPENDENT OF SCREEN SIZE)
-  // ========================================================
+
+  const visibleHeightAtZero = 2 * M2_BASE_DIST * 0.57735; 
   
-  // 1. Define World Height (based on fixed Camera Dist)
-  const visibleHeightAtZero = 2 * M2_BASE_DIST * 0.57735; // ~2540 units
-  
-  // 2. FORCE NARROW BOUNDARIES
-  // We constrain the scatter area to 45% of the height width.
-  // This essentially creates a vertical strip down the center.
-  // Even if the screen is wide, the images won't spread out.
+
   let boundaryX = visibleHeightAtZero * 0.45; 
   let boundaryY = visibleHeightAtZero * 0.45; 
   
@@ -278,18 +259,18 @@ function rebuildMode2Nodes() {
       let ratio = img.width / img.height;
       let w, h, isHero = false;
 
-      // HERO (50% of view)
+
       if (i === 0) {
           isHero = true;
           let baseSize = visibleHeightAtZero * 0.50; 
           if (ratio >= 1) { w = baseSize; h = w / ratio; } else { h = baseSize; w = h * ratio; }
       } 
-      // MEDIUM (30%)
+
       else if (i <= 3) {
           let baseSize = visibleHeightAtZero * 0.30; 
           if (ratio >= 1) { w = baseSize; h = w / ratio; } else { h = baseSize; w = h * ratio; }
       }
-      // SMALL (15%)
+
       else {
           let baseSize = visibleHeightAtZero * 0.15; 
           if (ratio >= 1) { w = baseSize; h = w / ratio; } else { h = baseSize; w = h * ratio; }
