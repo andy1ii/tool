@@ -1,6 +1,4 @@
-// ==========================================
-// MODE 1: FISHEYE SLIDER (OPTIMIZED GLASS)
-// ==========================================
+
 
 let m1_pg, m1_fxLayer, m1_fisheyeShader;
 let m1_slideGroups = [];
@@ -8,7 +6,6 @@ let m1_timer = 0;
 let m1_currentIndex = 0;
 let m1_imagesLoadedCount = 0; 
 
-// CONFIGURATION
 const M1_CYCLE_MS = 2000; 
 const M1_GAP = 25;
 const M1_RANGE_MULT = 600;
@@ -56,7 +53,6 @@ function setupMode1() {
 function runMode1(drawToScreen = true) {
   if (!m1_pg) setupMode1();
   
-  // Check if we need to rebuild slides (new upload)
   if(uploadedImages.length != m1_imagesLoadedCount) rebuildMode1Slides();
 
   let dt = (typeof isRecording !== 'undefined' && isRecording) ? 16.666 : deltaTime;
@@ -114,17 +110,16 @@ function getMode1TotalFrames() {
     return Math.ceil(((groups * M1_CYCLE_MS) / 1.0) / 16.666);
 }
 
-// --- OPTIMIZATION: Pre-calculate blurred assets ---
+
 function rebuildMode1Slides() {
   if(uploadedImages.length > 0) {
-    // 1. Pre-generate blurred versions for Glassmorphism
-    // This happens ONCE per upload, ensuring the main loop runs at 60fps.
+
     for(let img of uploadedImages) {
         if (img instanceof p5.Image && !img.blurredRep) {
-            // Create a small clone (downsampling improves perf and smoothness)
+
             let b = img.get();
             b.resize(b.width * 0.5, 0); // 50% scale
-            b.filter(BLUR, 9); // 9px blur on 50% img ~= 18px blur on full img
+            b.filter(BLUR, 9);
             img.blurredRep = b;
         }
     }
@@ -154,13 +149,13 @@ class M1_SlideGroup {
     let topH = halfH - halfGap; let leftW = halfW - halfGap;
     let botY = halfH + halfGap; let botH = halfH - halfGap;
 
-    // We now pass the 'bgImage' to drawBadge so it knows what to blur
+
     if (!flipped) {
         this.drawCover(ctx, this.images[0], 0, 0, leftW, h); 
         this.drawCover(ctx, this.images[1], rightX, 0, rightW, topH); 
         this.drawCover(ctx, this.images[2], rightX, botY, rightW, botH); 
         
-        // Pass this.images[1] (Top Right) or this.images[2] (Bottom Right)
+
         if (!badgeOnBottom) this.drawBadge(ctx, rightX, 0, rightW, topH, yOffset, false, false, cycleCount, this.images[1]);
         else this.drawBadge(ctx, rightX, botY, rightW, botH, yOffset, false, true, cycleCount, this.images[2]); 
     } else {
@@ -168,14 +163,14 @@ class M1_SlideGroup {
         this.drawCover(ctx, this.images[1], 0, 0, leftW, topH);
         this.drawCover(ctx, this.images[2], 0, botY, leftW, botH);
         
-        // Pass this.images[1] (Top Left) or this.images[2] (Bottom Left)
+
         if (!badgeOnBottom) this.drawBadge(ctx, 0, 0, leftW, topH, yOffset, true, false, cycleCount, this.images[1]);
         else this.drawBadge(ctx, 0, botY, leftW, botH, yOffset, true, true, cycleCount, this.images[2]);
     }
     ctx.pop();
   }
 
-  // Updated to accept bgImage
+
   drawBadge(ctx, x, y, w, h, scrollY, alignRight, alignTop, cycleCount, bgImage) {
     if (typeof userNames === 'undefined' || userNames.length === 0) return;
     let nameIndex = cycleCount % userNames.length;
@@ -184,7 +179,7 @@ class M1_SlideGroup {
 
     ctx.push(); ctx.translate(x, y);
     
-    // --- 1. SHAPE CONFIGURATION ---
+
     let scaleFactor = ctx.width / 1080; 
     let gFont = 28 * scaleFactor; 
     let gPadY = 15 * scaleFactor;        
@@ -200,39 +195,37 @@ class M1_SlideGroup {
     let posY = alignTop ? margin : h - badgeH - margin;
     let absY = scrollY + y + posY;
 
-    // Visibility Check
+
     if(absY > -badgeH && absY < ctx.height + badgeH) {
         
-        // --- 2. OPTIMIZED GLASS EFFECT ---
-        // Instead of capturing pixels (SLOW), we draw the pre-blurred image (FAST)
+
+
         if (bgImage && bgImage.blurredRep) {
             ctx.push();
             let dCtx = ctx.drawingContext; 
             dCtx.save();
             
-            // Clip to Pill Shape
+
             dCtx.beginPath();
             if (dCtx.roundRect) dCtx.roundRect(posX, posY, badgeW, badgeH, gRadius);
             else dCtx.rect(posX, posY, badgeW, badgeH); 
             dCtx.clip(); 
 
-            // Draw the blurred asset using the EXACT same geometry as the background.
-            // Since we are inside translate(x,y), we draw at (0,0) with size (w,h)
-            // matching the cell's local coordinate system.
+
             this.drawCover(ctx, bgImage.blurredRep, 0, 0, w, h);
             
             dCtx.restore(); 
             ctx.pop();
         } 
-        // Fallback for solid colors (just draw a semi-transparent fill)
+
         else if (bgImage instanceof p5.Color) {
              ctx.noStroke(); ctx.fill(bgImage); 
              ctx.rect(posX, posY, badgeW, badgeH, gRadius);
         }
 
-        // --- 3. GLASS TINT & TEXT ---
+
         ctx.noStroke(); 
-        ctx.fill(255, 40); // Tint
+        ctx.fill(255, 40); 
         ctx.rect(posX, posY, badgeW, badgeH, gRadius); 
         
         ctx.noStroke(); ctx.fill(255); ctx.textAlign(CENTER, CENTER);
@@ -251,7 +244,7 @@ class M1_SlideGroup {
     let boxAsp = w / h;
     let sx, sy, sW, sH;
     
-    // Calculate "Cover" fit
+
     if (imgAsp > boxAsp) { 
         sH = img.height; 
         sW = img.height * boxAsp; 
