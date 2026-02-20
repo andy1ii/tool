@@ -1,25 +1,20 @@
-// ==========================================
-// MODE 4: FISHEYE GRID (FAST LOOP / INSTANT RESTART)
-// ==========================================
 
-// --- CONFIGURATION ---
 const M4_ANIMATION_DURATION = 50;   
 const M4_POP_DELAY = 1;               
 const M4_POP_INTENSITY = 0.1;         
 
-// CHANGE: Reduced from 60 to 5. 
-// This eliminates the "empty screen" wait at the start and end.
+
 const M4_START_DELAY = 30;            
 
-// CHANGE: Keep hold short (30 frames = 0.5s)
+
 const M4_HOLD_DURATION = 50; 
 
-// Dynamic timings
+
 let m4_T_SNAP_DURATION = 120; 
 let m4_TIME_SEQUENCE_END = 0; 
 const M4_MAX_DISTORTION = 0.12; 
 
-// --- STATE ---
+
 let m4_gap = 10; 
 let m4_seqTimer = 0;
 let m4_camScale = 2.75; 
@@ -39,12 +34,12 @@ let m4_gridOriginY = 0;
 const M4_START_SCALE = 2.75; 
 const M4_SNAP_SCALE = 1.7; 
 
-// --- BUFFERS ---
+
 let m4_pg;          
 let m4_fxLayer;     
 let m4_fisheyeShader;
 
-// --- SHADERS ---
+
 const m4_vertShader = `
   attribute vec3 aPosition;
   attribute vec2 aTexCoord;
@@ -80,9 +75,7 @@ const m4_fragShader = `
   }
 `;
 
-// ==========================================
-// SETUP & LIFECYCLE
-// ==========================================
+
 
 function setupMode4() {
     m4_pg = createGraphics(windowWidth, windowHeight);
@@ -122,16 +115,13 @@ function getMode4TotalFrames() {
     const TIME_INTRO_END = M4_START_DELAY + m4_T_SNAP_DURATION;
     const TIME_HOLD_END  = TIME_INTRO_END + M4_HOLD_DURATION;
     
-    // CHANGE: The loop ends exactly when the reverse animation finishes.
-    // No extra delay added.
+
     const TIME_REVERSE_END = TIME_HOLD_END + m4_T_SNAP_DURATION; 
     
     return TIME_REVERSE_END; 
 }
 
-// ==========================================
-// RENDER LOOP
-// ==========================================
+
 
 function runMode4(isFullMode) {
     if (!m4_pg || !m4_fxLayer) return;
@@ -146,7 +136,7 @@ function runMode4(isFullMode) {
 
     m4_pg.background(247, 245, 243); 
     
-    // --- LOOPING LOGIC ---
+
     let realSeqTime = 0;
     const TOTAL_CYCLE = getMode4TotalFrames(); 
 
@@ -178,7 +168,7 @@ function runMode4(isFullMode) {
         if (effectiveTime < 0) effectiveTime = 0;
     }
 
-    // --- ANIMATION ---
+
     let userDistortion = 0.5; 
     let slider = document.getElementById('m4DistSlider');
     if (slider) {
@@ -198,7 +188,7 @@ function runMode4(isFullMode) {
         m4_currentDistortion = lerp(0, maxD, t); 
     }
 
-    // --- DRAW ---
+
     m4_pg.push();
     m4_pg.translate(w/2, h/2);
     m4_pg.scale(m4_camScale);
@@ -210,7 +200,7 @@ function runMode4(isFullMode) {
     }
     m4_pg.pop(); 
 
-    // --- POST PROCESS ---
+
     m4_fxLayer.shader(m4_fisheyeShader);
     m4_fisheyeShader.setUniform('tex0', m4_pg);
     m4_fisheyeShader.setUniform('uStrength', m4_currentDistortion);
@@ -222,9 +212,7 @@ function runMode4(isFullMode) {
     }
 }
 
-// ==========================================
-// LAYOUT GENERATION (ULTRA LIGHT)
-// ==========================================
+
 
 function rebuildMode4Layout() {
     if (uploadedImages.length === 0) {
@@ -244,12 +232,12 @@ function rebuildMode4Layout() {
     
     if(m4_gridUnit <= 0) m4_gridUnit = 50;
 
-    // --- OPTIMIZATION 1: CAP IMAGES ---
+
     let areaToFill = m4_rectLimit.w * m4_rectLimit.h;
     let approxImages = Math.ceil(areaToFill / (m4_gridUnit*m4_gridUnit));
     if (approxImages > 20) approxImages = 20; 
 
-    // Center Image
+
     if (m4_sourceLibrary.length > 0) {
         let centerImg = m4_sourceLibrary[m4_nextSourceIndex % m4_sourceLibrary.length];
         m4_nextSourceIndex++;
@@ -274,7 +262,7 @@ function rebuildMode4Layout() {
         m4_activeImages.push(newItem);
     }
 
-    // --- OPTIMIZATION 2: REDUCE ATTEMPTS ---
+
     let maxAttempts = 5; 
     let currentAttempts = 0;
     let loopSafety = 0;
@@ -297,7 +285,7 @@ function rebuildMode4Layout() {
         } else { break; }
     }
 
-    // Spiral Sort
+
     const SPIRAL_PITCH = m4_gridUnit * 6; 
     m4_activeImages.sort((a, b) => {
         let centerAX = a.targetX + a.w/2;
@@ -334,9 +322,7 @@ function rebuildMode4Layout() {
     m4_seqTimer = 0; 
 }
 
-// ==========================================
-// GRID LOGIC HELPER
-// ==========================================
+
 
 function m4_placeImageGapFiller(img, sizePref, existingItem = null) {
   let imgAspect = img.width / img.height;
@@ -402,7 +388,7 @@ function m4_placeImageGapFiller(img, sizePref, existingItem = null) {
 function m4_findClosestGridSpot(w, h) {
   let step = m4_gridUnit + m4_gap;
   
-  // --- OPTIMIZATION 3: SEARCH RADIUS ---
+
   let searchRange = 6 + Math.ceil(Math.sqrt(m4_activeImages.length)); 
   if (searchRange > 12) searchRange = 12; 
 
@@ -449,9 +435,7 @@ function m4_checkRectOverlap(x1, y1, w1, h1, x2, y2, w2, h2, gap) {
   return (x1 < x2 + w2 + gap && x1 + w1 + gap > x2 && y1 < y2 + h2 + gap && y1 + h1 + gap > y2);
 }
 
-// ==========================================
-// CLASSES & UTILS
-// ==========================================
+
 
 class M4GridItem {
   constructor(img, x, y, w, h, sizeMult) {
