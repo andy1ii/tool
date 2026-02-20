@@ -1,7 +1,3 @@
-// ==========================================
-// GLOBAL STATE & P5 SETUP
-// ==========================================
-
 let currentMode = 0; // 0 = GRID VIEW
 let canvas;
 let uploadedImages = [];
@@ -9,21 +5,17 @@ let userNames = ["@cosmos", "@design", "@motion"];
 let recorder;
 let isRecording = false;
 
-// NEW: Declare a global font variable for the canvas
 let globalFont; 
 
-// Shared Sliders
 let p_radius, p_size, p_speed;
 
-// Recording State
 let recordingStartFrame = 0;
 let recordingTotalFrames = 0;
 
-// Layout Cache
 let bentoLayout = [];
 
 function preload() {
-  // NEW: Load the font directly into p5.js so the canvas can render it
+
   globalFont = loadFont('resources/CosmosOracle-Regular.otf');
 
   for (let i = 1; i <= 7; i++) {
@@ -43,23 +35,20 @@ function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
   canvas.parent('canvas-container');
 
-  // --- SMART PIXEL DENSITY ---
+
   let targetDensity = Math.min(window.devicePixelRatio, 2);
   pixelDensity(targetDensity);
 
   frameRate(60);
 
-  // Initialize Modes
   if(typeof setupMode1 === 'function') setupMode1();
   if(typeof setupMode2 === 'function') setupMode2();
   if(typeof setupMode3 === 'function') setupMode3();
   if(typeof setupMode4 === 'function') setupMode4(); 
   if(typeof setupMode5 === 'function') setupMode5(); 
 
-  // Default Aspect Ratio
   document.getElementById('aspectRatioSelect').value = "9:16";
 
-  // Delayed build to ensure assets are ready
   setTimeout(() => {
      if(typeof rebuildMode1Slides === 'function') rebuildMode1Slides();
      if(typeof rebuildMode2Nodes === 'function') {
@@ -82,7 +71,7 @@ function draw() {
   background('#F7F5F3');
 
   if (currentMode === 0) {
-      // GRID VIEW (DASHBOARD)
+
       if (frameCount % 2 === 0) {
           if(typeof runMode1 === 'function') runMode1(false);
       } else {
@@ -124,9 +113,6 @@ function draw() {
   if (isRecording) { drawRecordingBar(); }
 }
 
-// ==========================================
-// BENTO BOX LAYOUT
-// ==========================================
 
 function calculateBentoLayout() {
   let pad = 15;
@@ -174,7 +160,6 @@ function calculateBentoLayout() {
       if(typeof m3_pg !== 'undefined') syncPG(m3_pg, s3);
       if(typeof m5_pg !== 'undefined') syncPG(m5_pg, s5); 
       
-      // Mode 4 Sync - DEBOUNCED
       if(typeof m4_pg !== 'undefined') {
           if (abs(m4_pg.width - s4.w) > 3 || abs(m4_pg.height - s4.h) > 3) {
              m4_pg.pixelDensity(1); 
