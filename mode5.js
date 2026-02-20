@@ -1,8 +1,3 @@
-/* ==========================================
-   MODE 5: KINETIC VERTICAL MOTION
-   - Uses global 'uploadedImages'
-   - Uses global 'globalFont'
-========================================== */
 
 let m5_pg;
 let m5_motion;
@@ -10,16 +5,16 @@ let m5_tagSystem;
 let m5_shouldUpdateColor = true; 
 let m5_totalFrames = 0;
 
-// EXAGGERATED RATIOS
+
 let m5_ratioPalette = [
-  1.0,      // Square
-  3/2,      // Classic Landscape
-  2/3,      // Classic Portrait
-  16/9,     // Wide
-  9/16,     // Social Story
-  3/1,      // Ultra Wide (Panoramic)
-  1/3,      // Ultra Tall (Skyscraper)
-  2.35/1    // Cinematic Anamorphic
+  1.0,    
+  3/2,   
+  2/3,     
+  16/9,    
+  9/16,  
+  3/1,  
+  1/3,  
+  2.35/1 
 ];
 
 function setupMode5() {
@@ -33,7 +28,7 @@ function runMode5(isFullRender) {
   let target = isFullRender ? this : m5_pg; 
   let imgs = (typeof uploadedImages !== 'undefined' && uploadedImages.length > 0) ? uploadedImages : [];
 
-  // --- INPUTS ---
+
   let speedVal = 17;
   let scaleVal = 60;
   let tagText = "Cosmos Tag";
@@ -47,10 +42,10 @@ function runMode5(isFullRender) {
   let textInput = document.getElementById('m5TextInput');
   if(textInput) tagText = textInput.value || "Cosmos Tag";
 
-  // --- SETUP CANVAS ---
+
   target.background('#F7F5F3');
 
-  // --- ZOOM & BLEED STRATEGY ---
+
   let VIRTUAL_WIDTH = 1080; 
   let globalScale;
 
@@ -68,7 +63,7 @@ function runMode5(isFullRender) {
   let vW = VIRTUAL_WIDTH;
   let vH = target.height / globalScale; 
 
-  // --- ANIMATION TIMER ---
+
   if (imgs.length > 0) {
     m5_totalFrames++;
     if (m5_totalFrames > m5_motion.timeline.totalLoop) {
@@ -76,17 +71,16 @@ function runMode5(isFullRender) {
     }
   }
 
-  // --- WAITING STATE ---
+
   if (imgs.length === 0) {
     target.pop(); 
-    return; // Removed the "Upload" text to prevent the flash
+    return;
   }
 
-  // --- SCALE LOGIC FIX ---
-  // If preview mode, scale the tag and layout gaps together so it stays proportionally identical to Mode 5
+
   let tagScale = isFullRender ? 1.0 : 0.7; 
 
-  // --- LAYOUT CALCULATIONS ---
+
   let scaleFactor = scaleVal / 100;
   let maxSlotW = vW * scaleFactor;
   let maxSlotH = vH * 0.4; 
@@ -112,7 +106,7 @@ function runMode5(isFullRender) {
   let topRealDims = m5_getFittedDimensions(topImg, topSlotDims.w, topSlotDims.h);
   let btmRealDims = m5_getFittedDimensions(btmImg, btmSlotDims.w, btmSlotDims.h);
 
-  // FIXED CONSTANTS (Scaled to match the tag size)
+
   let tagEstimatedH = 75 * tagScale; 
   let gap = 50 * tagScale;            
   let centerScreenY = vH / 2;
@@ -125,7 +119,7 @@ function runMode5(isFullRender) {
 
   let tagTargetY = centerScreenY;
 
-  // --- ROBUST COLOR UPDATE ---
+
   if (imgs.length > 0) {
       if (m5_shouldUpdateColor || m5_tagSystem.isDefaultColor() || frameCount % 30 === 0) {
            m5_tagSystem.calculateDominantColor(imgs);
@@ -133,7 +127,7 @@ function runMode5(isFullRender) {
       }
   }
 
-  // --- DRAWING ---
+
   let effTime = m5_motion.getEffectiveTime(m5_totalFrames);
   let cam = m5_motion.getGlobalState(effTime);
 
@@ -145,17 +139,17 @@ function runMode5(isFullRender) {
     
     let fontToUse = (typeof globalFont !== 'undefined') ? globalFont : 'Arial';
     
-    // Tag Render
+
     m5_drawAnimatedItem(target, 0, vW/2, tagTargetY, effTime, vW, vH, (state) => {
         m5_tagSystem.render(target, state.x, state.y, tagText, fontToUse, tagScale);
     });
 
-    // Top Image
+
     m5_drawAnimatedItem(target, 1, vW/2, topTargetY, effTime, vW, vH, (state) => {
         target.image(topImg, state.x, state.y, topRealDims.w, topRealDims.h);
     });
 
-    // Bottom Image
+
     m5_drawAnimatedItem(target, 2, vW/2, btmTargetY, effTime, vW, vH, (state) => {
         target.image(btmImg, state.x, state.y, btmRealDims.w, btmRealDims.h);
     });
@@ -172,7 +166,7 @@ function getMode5TotalFrames() {
     return m5_motion.timeline.totalLoop;
 }
 
-// --- Helpers ---
+
 
 function m5_calculateSlotDims(targetRatio, maxW, maxH) {
     let containerRatio = maxW / maxH;
@@ -216,9 +210,7 @@ function m5_drawAnimatedItem(target, index, targetX, targetY, effTime, cW, cH, d
 }
 
 
-// ---------------------------------------------------------
-// --- CINEMATIC MOTION LOGIC ---
-// ---------------------------------------------------------
+
 class m5_CinematicMotion {
   constructor() {
     this.config = {
@@ -274,9 +266,7 @@ class m5_CinematicMotion {
   lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
 }
 
-// ---------------------------------------------------------
-// --- TAG CLASS ---
-// ---------------------------------------------------------
+
 class m5_ResponsiveTagSystem {
   constructor() {
     this.config = { 
@@ -335,8 +325,7 @@ class m5_ResponsiveTagSystem {
     let padY = this.config.paddingY * scaleMult;
     let rad = this.config.cornerRadius * scaleMult;
 
-    // FIX: Ditch textAscent/textDescent as they break in offscreen buffers.
-    // Use mathematically deterministic height based solely on fontSize.
+
     this.dimensions.w = target.textWidth(textString) + (padX * 2);
     this.dimensions.h = currentFontSize + (padY * 2);
     
@@ -345,17 +334,16 @@ class m5_ResponsiveTagSystem {
     target.push(); 
     target.rectMode(CENTER); 
     
-    // Draw Pill
+
     target.fill(this.currentColor); 
     target.noStroke();
     target.rect(x, y, this.dimensions.w, this.dimensions.h, rad);
     
-    // Draw Text 
-    // FIX: Using BASELINE bypasses the core p5.js internal centering bug.
+
     target.textAlign(CENTER, BASELINE);
     target.fill(this.getHighContrastTextColor(this.currentColor)); 
     
-    // Optical baseline calculation (pushes the text slightly down from exact center)
+
     let baselineY = y + (currentFontSize * 0.31); 
     target.text(textString, x, baselineY); 
     
