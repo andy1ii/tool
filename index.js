@@ -75,9 +75,9 @@ function setup() {
 }
 
 function draw() {
-  if (document.getElementById('radiusSlider')) p_radius = map(document.getElementById('radiusSlider').value, 0, 100, 0, 2.0);
-  if (document.getElementById('sizeSlider')) p_size = map(document.getElementById('sizeSlider').value, 0, 100, 1.3, 3.5);
-  if (document.getElementById('speedSlider')) p_speed = map(document.getElementById('speedSlider').value, 0, 100, 0, 2.0);
+  p_radius = map(document.getElementById('radiusSlider').value, 0, 100, 0, 2.0);
+  p_size = map(document.getElementById('sizeSlider').value, 0, 100, 1.3, 3.5);
+  p_speed = map(document.getElementById('speedSlider').value, 0, 100, 0, 2.0);
 
   background('#F7F5F3');
 
@@ -99,10 +99,10 @@ function draw() {
       if(typeof runMode1 === 'function') runMode1(true);
   }
   else if (currentMode === 2) {
-      let m2SizeSlider = document.getElementById('m2SizeSlider');
-      let m2SpacingSlider = document.getElementById('m2SpacingSlider');
-      if (m2SizeSlider && typeof setMode2Scale === 'function') setMode2Scale(m2SizeSlider.value / 100.0);
-      if (m2SpacingSlider && typeof setMode2Spacing === 'function') setMode2Spacing(m2SpacingSlider.value);
+      let scaleVal = document.getElementById('m2SizeSlider').value / 100.0;
+      let spacingVal = document.getElementById('m2SpacingSlider').value;
+      if(typeof setMode2Scale === 'function') setMode2Scale(scaleVal);
+      if(typeof setMode2Spacing === 'function') setMode2Spacing(spacingVal);
       if(typeof runMode2 === 'function') runMode2(true);
   }
   else if (currentMode === 3) {
@@ -192,16 +192,16 @@ function calculateBentoLayout() {
 
 function drawGridDashboard() {
   if (!bentoLayout || bentoLayout.length === 0) calculateBentoLayout();
-  let m1_preview = (typeof m1_fxLayer !== 'undefined') ? m1_fxLayer : (typeof m1_pg !== 'undefined' ? m1_pg : null);
+  let m1_preview = (typeof m1_fxLayer !== 'undefined') ? m1_fxLayer : m1_pg;
   
   drawCard(bentoLayout[0], m1_preview, true);
-  drawCard(bentoLayout[1], typeof m2_pg !== 'undefined' ? m2_pg : null, true);
-  drawCard(bentoLayout[2], typeof m3_pg !== 'undefined' ? m3_pg : null, true); 
+  drawCard(bentoLayout[1], m2_pg, true);
+  drawCard(bentoLayout[2], m3_pg, true); 
   
-  let m4_preview = (typeof m4_fxLayer !== 'undefined') ? m4_fxLayer : (typeof m4_pg !== 'undefined' ? m4_pg : null);
+  let m4_preview = (typeof m4_fxLayer !== 'undefined') ? m4_fxLayer : m4_pg;
   drawCard(bentoLayout[3], m4_preview, true);
   
-  drawCard(bentoLayout[4], typeof m5_pg !== 'undefined' ? m5_pg : null, true);
+  drawCard(bentoLayout[4], m5_pg, true);
 }
 
 function drawCard(slot, graphic, isActive) {
@@ -239,18 +239,19 @@ function updateUI() {
     let globalControls = document.getElementById('global-controls');
 
     if (currentMode === 0) {
-        if (backBtn) backBtn.style.display = 'none';
+        backBtn.style.display = 'none';
         if(homeInfo) homeInfo.style.display = 'block';
         if(globalControls) globalControls.classList.remove('visible');
         cursor(ARROW);
         document.querySelectorAll('.mode-controls').forEach(el => el.classList.remove('visible'));
     } else {
-        if (backBtn) backBtn.style.display = 'block';
+        backBtn.style.display = 'block';
         if(homeInfo) homeInfo.style.display = 'none';
         if(globalControls) globalControls.classList.add('visible');
         document.querySelectorAll('.mode-controls').forEach(el => el.classList.remove('visible'));
         let activeControls = document.getElementById('controls-mode-' + currentMode);
         if (activeControls) activeControls.classList.add('visible');
+        if(globalControls) globalControls.classList.add('visible');
     }
 }
 
@@ -262,12 +263,7 @@ function setResolutionMode(isThumbnail) {
 function goToGrid() {
     currentMode = 0; frameRate(30); updateUI();
     resizeCanvas(windowWidth, windowHeight);
-    
-    if (canvas && canvas.elt) {
-        canvas.elt.style.width = windowWidth + "px"; 
-        canvas.elt.style.height = windowHeight + "px";
-    }
-    
+    canvas.elt.style.width = windowWidth + "px"; canvas.elt.style.height = windowHeight + "px";
     calculateBentoLayout();
 }
 
@@ -275,20 +271,18 @@ function switchMode(modeNum) {
   currentMode = modeNum; frameRate(60); updateUI();
   let ratioSelect = document.getElementById('aspectRatioSelect');
   
-  if (ratioSelect) {
-      if (currentMode === 1) ratioSelect.value = "9:16";
-      else if (currentMode === 2) ratioSelect.value = "4:5";
-      else if (currentMode === 3) ratioSelect.value = "16:9";
-      else if (currentMode === 4) ratioSelect.value = "1:1";
-      else if (currentMode === 5) ratioSelect.value = "9:16"; 
-  }
+  if (currentMode === 1) ratioSelect.value = "9:16";
+  else if (currentMode === 2) ratioSelect.value = "4:5";
+  else if (currentMode === 3) ratioSelect.value = "16:9";
+  else if (currentMode === 4) ratioSelect.value = "1:1";
+  else if (currentMode === 5) ratioSelect.value = "9:16"; 
   
   setResolutionMode(false);
 
   if (currentMode === 2 && (typeof m2_nodes === 'undefined' || m2_nodes.length === 0) && uploadedImages.length > 0) {
       if(typeof rebuildMode2Nodes === 'function') { rebuildMode2Nodes(); triggerMode2Burst(); }
   } else if (currentMode === 2) {
-      if(typeof triggerMode2Burst === 'function') triggerMode2Burst(false);
+      triggerMode2Burst(false);
   }
 
   if (currentMode === 4) {
@@ -338,16 +332,7 @@ function mouseReleased() {
     if (currentMode === 2 && typeof mode2_mouseReleased === 'function') mode2_mouseReleased(); 
 }
 
-function drawRecordingBar() { 
-    push(); 
-    resetMatrix(); 
-    let framesRecorded = frameCount - recordingStartFrame; 
-    let progress = constrain(framesRecorded / recordingTotalFrames, 0, 1); 
-    noStroke(); 
-    fill(0); 
-    rect(0, height - 12, width * progress, 12); 
-    pop(); 
-}
+function drawRecordingBar() { push(); resetMatrix(); let framesRecorded = frameCount - recordingStartFrame; let progress = constrain(framesRecorded / recordingTotalFrames, 0, 1); noStroke(); fill(0); rect(0, height - 12, width * progress, 12); pop(); }
 
 function setHighResExport(enable) {
     let d = enable ? 2 : 1; 
@@ -378,26 +363,24 @@ function toggleVideoRecord() {
         recorder = new CCapture({ format: 'webm', framerate: 60 }); 
         recordingStartFrame = frameCount; 
         
-        if(currentMode === 1 && typeof getMode1TotalFrames === 'function') { m1_timer = 0; recordingTotalFrames = getMode1TotalFrames(); } 
-        else if(currentMode === 2 && typeof getMode2TotalFrames === 'function') { triggerMode2Burst(); recordingStartFrame = frameCount; recordingTotalFrames = getMode2TotalFrames(); } 
-        else if(currentMode === 3 && typeof resetMode3Animation === 'function') { resetMode3Animation(); recordingTotalFrames = 300; } 
+        if(currentMode === 1) { m1_timer = 0; recordingTotalFrames = getMode1TotalFrames(); } 
+        else if(currentMode === 2) { triggerMode2Burst(); recordingStartFrame = frameCount; recordingTotalFrames = getMode2TotalFrames(); } 
+        else if(currentMode === 3) { resetMode3Animation(); recordingTotalFrames = 300; } 
         else if(currentMode === 4) { 
-            if(typeof resetMode4Timer === 'function') resetMode4Timer(); 
+            resetMode4Timer(); 
             if(typeof getMode4TotalFrames === 'function') recordingTotalFrames = getMode4TotalFrames();
             else recordingTotalFrames = 300;
         }
-        else if(currentMode === 5 && typeof getMode5TotalFrames === 'function') { 
-            m5_totalFrames = 0; 
+        else if(currentMode === 5) { 
+            m5_totalFrames = 0; // RESTART ANIMATION LOOP
             recordingTotalFrames = getMode5TotalFrames();
         }
         else { recordingTotalFrames = 600; } 
         
         recorder.start(); 
         isRecording = true; 
-        if (btn) {
-            btn.innerText = "Recording..."; 
-            btn.classList.add('recording'); 
-        }
+        btn.innerText = "Recording..."; 
+        btn.classList.add('recording'); 
     } else { 
         stopVideoRecord(); 
     } 
@@ -408,10 +391,8 @@ function stopVideoRecord() {
     isRecording = false; 
     if(recorder) { recorder.stop(); recorder.save(); } 
     setHighResExport(false); 
-    if (btn) {
-        btn.innerText = "Record Video"; 
-        btn.classList.remove('recording'); 
-    }
+    btn.innerText = "Record Video"; 
+    btn.classList.remove('recording'); 
 }
 
 function triggerImageExport() { 
@@ -421,32 +402,19 @@ function triggerImageExport() {
     setTimeout(() => { setHighResExport(false); }, 1000); 
 }
 
-function updateUsernames() { 
-    let u1 = document.getElementById('user1');
-    let u2 = document.getElementById('user2');
-    let u3 = document.getElementById('user3');
-    if(u1 && u2 && u3) {
-        userNames = [u1.value, u2.value, u3.value]; 
-    }
-}
+function updateUsernames() { userNames = [document.getElementById('user1').value, document.getElementById('user2').value, document.getElementById('user3').value]; }
 
 function handleImageUpload(input) {
   if (input.files) {
-    let tempImages = []; 
-    let uploadLabel = document.getElementById('uploadLabel');
-    if (uploadLabel) uploadLabel.innerText = input.files.length + " Added";
-    
+    uploadedImages = [];
+    document.getElementById('uploadLabel').innerText = input.files.length + " Added";
     let loaded = 0;
-    
     for (let i = 0; i < input.files.length; i++) {
       let url = URL.createObjectURL(input.files[i]);
       loadImage(url, (img) => {
-        tempImages.push(img);
+        uploadedImages.push(img);
         loaded++;
-        
         if(loaded === input.files.length) {
-            uploadedImages = tempImages; 
-            
             if(typeof rebuildMode1Slides === 'function') rebuildMode1Slides();
             if(typeof rebuildMode2Nodes === 'function') { rebuildMode2Nodes(); triggerMode2Burst(); }
             if(typeof rebuildMode3Nodes === 'function') rebuildMode3Nodes();
@@ -459,14 +427,10 @@ function handleImageUpload(input) {
 }
 
 function resizeCanvasToRatio() {
-  if (currentMode === 0 || !canvas || !canvas.elt) return;
+  if (currentMode === 0) return;
   let container = document.querySelector('.main-stage');
-  if (!container) return;
-  
   let availW = container.clientWidth; let availH = container.clientHeight;
-  let ratioSelect = document.getElementById('aspectRatioSelect');
-  let val = ratioSelect ? ratioSelect.value : "9:16";
-  
+  let val = document.getElementById('aspectRatioSelect').value;
   let w, h; let maxW = availW * 0.9; let maxH = availH * 0.9;
   if (val === "1:1") { let s = Math.min(maxW, maxH); w = s; h = s; }
   else if (val === "4:5") { if (maxW / maxH > 4/5) { h = maxH; w = h * (4/5); } else { w = maxW; h = w * (5/4); } }
@@ -475,8 +439,7 @@ function resizeCanvasToRatio() {
   w = Math.floor(w); h = Math.floor(h);
 
   resizeCanvas(w, h);
-  canvas.elt.style.width = w + "px"; 
-  canvas.elt.style.height = h + "px";
+  canvas.elt.style.width = w + "px"; canvas.elt.style.height = h + "px";
 
   let d = pixelDensity();
   
@@ -496,14 +459,9 @@ function resizeCanvasToRatio() {
 }
 
 function windowResized() {
-    if (!canvas || !canvas.elt) return;
-
     if(currentMode === 0) {
         resizeCanvas(windowWidth, windowHeight);
-        canvas.elt.style.width = windowWidth + "px"; 
-        canvas.elt.style.height = windowHeight + "px";
+        canvas.elt.style.width = windowWidth + "px"; canvas.elt.style.height = windowHeight + "px";
         calculateBentoLayout();
-    } else {
-        resizeCanvasToRatio();
-    }
+    } else resizeCanvasToRatio();
 }
